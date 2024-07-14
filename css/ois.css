@@ -1,0 +1,39 @@
+/* Definir estilos para o título */
+h1 {
+    font-size: 2.5em;
+    text-align: center;
+    margin: 5;
+    padding: 50px;
+}
+
+/* Definir estilos para o subtítulo */
+h2 {
+    font-size: 2em;
+    margin: 0;
+    color: #4CAF50;
+    text-align: center;
+
+}
+
+/* Definir estilos para textos normais */
+body {
+    font-size: 1em;
+    line-height: 1.5;
+    margin: 0;
+}
+
+/* Definir estilos para os textos dos filtros */
+.stSelectbox {
+    font-size: 1em;
+}
+
+/* Definir estilos para as colunas */
+.css-1y0tads {
+    padding: 10px;
+}
+
+/* Estilizar o gráfico */
+.vega-embed {
+    max-width: 100%;
+}
+
