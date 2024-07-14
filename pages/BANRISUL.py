@@ -3,6 +3,9 @@ import pandas as pd
 import altair as alt
 from datetime import datetime
 
+# Configurar layout da página para largura completa
+st.set_page_config(layout="wide")
+
 url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTlBXGpJ6j2i-C6edJ-eB4X2DD-7KA7Ys1bIR-tCFeYt6B-7S30bcY_bd0TUtEbttDiMBtexpD-2C4-/pub?gid=1319816246&single=true&output=csv"
 
 def carregar_dados(url):
