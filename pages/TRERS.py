@@ -287,7 +287,7 @@ with col8:
         st.write(disciplinas_grouped_data)
 
 st.write("---")
-col9, col10 = st.columns([1, 5])
+col9, col10 = st.columns([3, 5])
 
 with col9:
     st.altair_chart(chart6, use_container_width=True)
