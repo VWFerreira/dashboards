@@ -89,11 +89,11 @@ for col in expected_columns:
 
 # Limpeza e conversão dos dados do terceiro conjunto de dados
 def clean_and_convert(value):
-    if "TOTAL" in value:
+    if isinstance(value, str) and "TOTAL" in value:
         return None
     try:
         return float(value.replace("R$", "").replace(".", "").replace(",", ".").strip())
-    except ValueError:
+    except (ValueError, AttributeError):
         return 0.0
 
 # Extração e soma das colunas mensais
@@ -187,11 +187,15 @@ def sopoat():
             """,
             unsafe_allow_html=True,
         )
-        unique_predios = data["data2"]["PREDIO"].unique()
+        unique_predios = data["data2"]["PREDIO"].unique().tolist()
+        unique_predios.insert(0, "Todos")
         selected_predio = st.selectbox("Selecione Escola", unique_predios)
 
     # Filtre os dados pelo prédio selecionado
-    filtered_data = data["data2"][data["data2"]["PREDIO"] == selected_predio]
+    if selected_predio == "Todos":
+        filtered_data = data["data2"]
+    else:
+        filtered_data = data["data2"][data["data2"]["PREDIO"] == selected_predio]
 
     # Verifique os dados filtrados
     st.write("### Dados Filtrados", filtered_data)
@@ -209,35 +213,8 @@ def sopoat():
                 value_name="Valor",
             )
 
-            # Define a condição para a cor da coluna com base no status
-            color_condition = alt.condition(
-                (
-                    (alt.datum.STATUS == "MEDIÇÃO 1")
-                    & (alt.datum.Etapa == "ETAPA 1 (CR.F.FINANCEIRO) 30 DIAS")
-                )
-                | (
-                    (alt.datum.STATUS == "MEDIÇÃO 2")
-                    & (alt.datum.Etapa == "ETAPA 2 (CR.F.FINANCEIRO) 60 DIAS")
-                )
-                | (
-                    (alt.datum.STATUS == "MEDIÇÃO 3")
-                    & (alt.datum.Etapa == "ETAPA 3 (CR.F.FINANCEIRO) 90 DIAS")
-                )
-                | (
-                    (alt.datum.STATUS == "MEDIÇÃO 4")
-                    & (alt.datum.Etapa == "ETAPA 4 (CR.F.FINANCEIRO) 120 DIAS")
-                )
-                | (
-                    (alt.datum.STATUS == "MEDIÇÃO 5")
-                    & (alt.datum.Etapa == "ETAPA 5 (CR.F.FINANCEIRO) 150 DIAS")
-                )
-                | (
-                    (alt.datum.STATUS == "MEDIÇÃO 6")
-                    & (alt.datum.Etapa == "ETAPA 6 (CR.F.FINANCEIRO) 180 DIAS")
-                ),
-                alt.value("#FFFF00"),
-                alt.value("#008080"),
-            )
+            # Definir as cores para os status
+            color_scale = alt.Scale(domain=expected_columns, range=["#6A5ACD", "#FFFF00", "#D2691E", "#008000", "#00FF00", "#8B0000", "#F5FFFA", "#FFA500"])
 
             chart = (
                 alt.Chart(melted_data)
@@ -245,7 +222,7 @@ def sopoat():
                 .encode(
                     x="Etapa:N",
                     y="Valor:Q",
-                    color=color_condition,
+                    color=alt.Color("Etapa:N", scale=color_scale),
                     tooltip=["Nº CONTRATO", "Etapa", "Valor", "STATUS"],
                 )
                 .interactive()
@@ -330,6 +307,88 @@ def sopoat():
             )
 
     st.write("---")
+
+    # Novo gráfico de status com filtro de PREDIO
+    st.subheader("Gráfico de Status por PREDIO")
+
+    col1, col2 = st.columns([1, 4])
+
+    with col1:
+        unique_predios_status = data["data4"]["PREDIO"].unique().tolist()
+        unique_predios_status.insert(0, "Todos")
+        selected_predio_status = st.selectbox("Selecione PREDIO", unique_predios_status, key="status_predio")
+
+    if selected_predio_status == "Todos":
+        filtered_data_status = data["data4"]
+    else:
+        filtered_data_status = data["data4"][data["data4"]["PREDIO"] == selected_predio_status]
+
+    with col2:
+        if not filtered_data_status.empty:
+            # Agrupar dados por status e contar ocorrências
+            status_count_filtered = filtered_data_status["STATUS"].value_counts().reset_index()
+            status_count_filtered.columns = ["Status", "Count"]
+
+            # Definir as cores para os status
+            color_scale = alt.Scale(domain=status_enum, range=["#6A5ACD", "#FFFF00", "#D2691E", "#008000", "#00FF00", "#8B0000", "#F5FFFA", "#FFA500"])
+
+            # Criar gráfico de barras coloridas
+            chart_status = (
+                alt.Chart(status_count_filtered)
+                .mark_bar()
+                .encode(
+                    x=alt.X("Status:N", title="Status"),
+                    y=alt.Y("Count:Q", title="Quantidade"),
+                    color=alt.Color("Status:N", scale=color_scale),
+                    tooltip=["Status", "Count"],
+                )
+                .properties(width=600)
+            )
+
+            st.altair_chart(chart_status, use_container_width=True)
+
+        st.write("### Dados Filtrados por PREDIO")
+        st.write(filtered_data_status)
+
+    st.write("---")
+
+    # Gráficos de pizza para LOTE e MUNICÍPIO
+    st.subheader("Gráficos de Pizza")
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.write("### Gráfico de Pizza por LOTE")
+        lote_count = data["data4"]["LOTE"].value_counts().reset_index()
+        lote_count.columns = ["Lote", "Count"]
+
+        chart_lote = (
+            alt.Chart(lote_count)
+            .mark_arc(innerRadius=50)
+            .encode(
+                theta=alt.Theta(field="Count", type="quantitative"),
+                color=alt.Color(field="Lote", type="nominal", scale=alt.Scale(range=["#FFFF00", "#D2691E", "#008000"])),
+                tooltip=["Lote", "Count"],
+            )
+        )
+
+        st.altair_chart(chart_lote, use_container_width=True)
+
+    with col2:
+        municipio_count = data["data4"]["MUNICIPIO"].value_counts().reset_index()
+        municipio_count.columns = ["Município", "Count"]
+
+        chart_municipio = (
+            alt.Chart(municipio_count)
+            .mark_arc(innerRadius=50)
+            .encode(
+                theta=alt.Theta(field="Count", type="quantitative"),
+                color=alt.Color(field="Município", type="nominal", scale=alt.Scale(range=["#FFFF00", "#D2691E", "#008000"])),
+                tooltip=["Município", "Count"],
+            )
+        )
+
+        st.altair_chart(chart_municipio, use_container_width=True)
 
 if __name__ == "__main__":
     sopoat()
