@@ -3,6 +3,7 @@ import pandas as pd
 import altair as alt
 from datetime import datetime
 from io import BytesIO
+import xlsxwriter
 
 # Configurar layout da página para largura completa
 st.set_page_config(layout="wide")
