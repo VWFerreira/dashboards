@@ -12,7 +12,7 @@ st.set_page_config(layout="wide")
 
 # Carregar e redimensionar a imagem
 imagem2 = Image.open("image/trers.png")
-imagem2 = imagem2.resize((200, 200))
+imagem2 = imagem2.resize((250, 200))
 
 # Definir estilo customizado
 st.markdown(
