@@ -2,78 +2,15 @@ import streamlit as st
 import pandas as pd
 import altair as alt
 from datetime import datetime
-from PIL import Image
-import unicodedata
-
-# Configurar layout da página para largura completa
-st.set_page_config(layout="wide")
-
-# Carregar imagens
-imagem2 = Image.open("./image/trers.png")
-
-# Reduzir o tamanho das imagens
-
-imagem2 = imagem2.resize((250, 150))
-
-# Definir estilo customizado
-st.markdown(
-    """
-    <style>
-    .container {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-    .images {
-        display: flex;
-        gap: 10px;
-    }
-    .images img {
-        width: 150px;
-        height: 150px;
-        animation: spin 5s linear infinite;
-    }
-    @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
-
-# Layout com colunas
-col1, col2 = st.columns([1, 1])
-
-with col2:
-    st.subheader("Contrato TRERS")
-
-with col1:
-    st.image(imagem2, caption=None, use_column_width=False)
-    st.markdown("</div>", unsafe_allow_html=True)
-
-
-# Função para carregar dados com cache de 60 segundos
-@st.cache_data(ttl=60)
-def load_data(url):
-    return pd.read_csv(url)
-
-
-import streamlit as st
-import pandas as pd
-import altair as alt
-from datetime import datetime
 from io import BytesIO
 
 # Configurar layout da página para largura completa
 st.set_page_config(layout="wide")
 
-
 # Função para carregar dados com cache de 60 segundos
 @st.cache_data(ttl=60)
 def load_data(url):
     return pd.read_csv(url)
-
 
 # Carregar dados do Google Sheets CSV
 url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR2Ql1eYWomSTjyQrylSBJ2tHgslpJEmA3iXrxJWTyJMNSkYRauZrJisIgEi1wT9D4Uu7S0Eyo04Xq3/pub?gid=1846942667&single=true&output=csv"
@@ -139,7 +76,9 @@ chart1 = (
         color=alt.Color(
             "Ano:N",
             title="Ano",
-            scale=alt.Scale(range=color_scheme),
+            scale=alt.Scale(
+                range=color_scheme
+            ),
         ),
         tooltip=["Ano", "Mes", "VALOR ORÇADO"],
     )
@@ -249,9 +188,7 @@ chart6 = (
     .mark_arc()
     .encode(
         theta=alt.Theta(field="Quantidade", type="quantitative"),
-        color=alt.Color(
-            field="Orçamentista", type="nominal", scale=alt.Scale(range=color_scheme)
-        ),
+        color=alt.Color(field="Orçamentista", type="nominal", scale=alt.Scale(range=color_scheme)),
         tooltip=["Orçamentista", "Quantidade"],
     )
     .properties(
@@ -372,7 +309,11 @@ chart_status = (
     .encode(
         x=alt.X("Mes:N", title="Mês"),
         y=alt.Y("VALOR ORÇADO:Q", title="Valor Orçado"),
-        color=alt.Color("Ano:N", title="Ano", scale=alt.Scale(range=color_scheme)),
+        color=alt.Color(
+            "Ano:N",
+            title="Ano",
+            scale=alt.Scale(range=color_scheme)
+        ),
         tooltip=["Ano", "Mes", "VALOR ORÇADO"],
     )
     .properties(
@@ -467,27 +408,27 @@ st.write(grouped_status_data)
 
 # Segunda tabela com os dados filtrados por status "APROVADO", "RECEBIDO" e "EXECUÇÃO"
 st.write("### Segunda Tabela dos Status 'APROVADO', 'RECEBIDO' e 'EXECUÇÃO'")
-second_table = filtered_status_data[
-    ["STATUS*", "DISCIPLINAS", "DESCRIÇÃO DO SERVIÇO", "DATA RECEBIDO"]
-].reset_index(drop=True)
+second_table = filtered_status_data[[
+    "STATUS*",
+    "DISCIPLINAS",
+    "DESCRIÇÃO DO SERVIÇO",
+    "DATA RECEBIDO"
+]].reset_index(drop=True)
 
 st.write(second_table)
-
 
 # Função para converter DataFrame em XLSX
 def to_excel(df):
     output = BytesIO()
-    writer = pd.ExcelWriter(output, engine="xlsxwriter")
-    df.to_excel(writer, index=False, sheet_name="Sheet1")
+    writer = pd.ExcelWriter(output, engine='xlsxwriter')
+    df.to_excel(writer, index=False, sheet_name='Sheet1')
     writer.close()
     processed_data = output.getvalue()
     return processed_data
 
-
 # Botão para download do XLSX
-st.download_button(
-    label="Baixar XLSX",
-    data=to_excel(second_table),
-    file_name="status_aprovado_recebido_execucao.xlsx",
-    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-)
+st.download_button(label="Baixar XLSX",
+                   data=to_excel(second_table),
+                   file_name="status_aprovado_recebido_execucao.xlsx",
+                   mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
