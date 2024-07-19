@@ -1,15 +1,17 @@
 import streamlit as st
 import pandas as pd
 import altair as alt
+from PIL import Image
 
 # Função para carregar dados do Google Sheets CSV
 def load_data(url):
     return pd.read_csv(url)
+
 # Configurar layout da página para largura completa
 st.set_page_config(layout="wide")
 
 # Carregar e redimensionar a imagem
-imagem2 = Image.open("./image/trers.png")
+imagem2 = Image.open("image/trers.png")
 imagem2 = imagem2.resize((200, 200))
 
 # Definir estilo customizado
