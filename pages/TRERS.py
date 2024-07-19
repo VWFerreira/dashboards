@@ -59,6 +59,22 @@ def load_data(url):
     return pd.read_csv(url)
 
 
+import streamlit as st
+import pandas as pd
+import altair as alt
+from datetime import datetime
+from io import BytesIO
+
+# Configurar layout da página para largura completa
+st.set_page_config(layout="wide")
+
+
+# Função para carregar dados com cache de 60 segundos
+@st.cache_data(ttl=60)
+def load_data(url):
+    return pd.read_csv(url)
+
+
 # Carregar dados do Google Sheets CSV
 url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR2Ql1eYWomSTjyQrylSBJ2tHgslpJEmA3iXrxJWTyJMNSkYRauZrJisIgEi1wT9D4Uu7S0Eyo04Xq3/pub?gid=1846942667&single=true&output=csv"
 data = load_data(url)
@@ -71,14 +87,19 @@ data["VALOR ORÇADO"] = (
     .astype(float)
 )
 
-# Limpar valores na coluna "DATA ORÇADO" formatando as datas corretamente
-data["DATA ORÇADO"] = pd.to_datetime(
-    data["DATA ORÇADO"], format="%d/%m/%Y", errors="coerce"
+# Limpar valores na coluna "DATA FINALIZADO" formatando as datas corretamente
+data["DATA FINALIZADO"] = pd.to_datetime(
+    data["DATA FINALIZADO"], format="%d/%m/%Y", errors="coerce"
+)
+
+# Adicionar coluna "DATA RECEBIDO" formatando corretamente
+data["DATA RECEBIDO"] = pd.to_datetime(
+    data["DATA RECEBIDO"], format="%d/%m/%Y", errors="coerce"
 )
 
 # Filtrar dados para os anos de 2023 e 2024 e calcular valor orçado por mês
-data["Ano"] = data["DATA ORÇADO"].dt.year
-data["Mes"] = data["DATA ORÇADO"].dt.strftime("%B")
+data["Ano"] = data["DATA FINALIZADO"].dt.year
+data["Mes"] = data["DATA FINALIZADO"].dt.strftime("%B")
 data_filtered = data[(data["Ano"] == 2023) | (data["Ano"] == 2024)]
 
 # Agrupar dados por ano e mês
@@ -105,6 +126,9 @@ grouped_data["Mes"] = pd.Categorical(
 )
 grouped_data = grouped_data.sort_values(["Ano", "Mes"])
 
+# Definir o esquema de cores personalizado
+color_scheme = ["#A9A9A9", "#87CEEB", "#66CDAA", "#F0F8FF", "#B0E0E6"]
+
 # Criar gráfico de barras com Altair
 chart1 = (
     alt.Chart(grouped_data)
@@ -115,22 +139,11 @@ chart1 = (
         color=alt.Color(
             "Ano:N",
             title="Ano",
-            scale=alt.Scale(
-                domain=[2023, 2024],
-                range=[
-                    "#8B0000",
-                    "#00FF00",
-                ],
-            ),
+            scale=alt.Scale(range=color_scheme),
         ),
         tooltip=["Ano", "Mes", "VALOR ORÇADO"],
     )
     .properties(width=600, height=400, title="Valor Orçado por Mês em 2023 e 2024")
-)
-
-# Adicionar coluna "DATA RECEBIDO" formatando corretamente
-data["DATA RECEBIDO"] = pd.to_datetime(
-    data["DATA RECEBIDO"], format="%d/%m/%Y", errors="coerce"
 )
 
 # Filtrar dados para os anos de 2023 e 2024
@@ -154,7 +167,7 @@ chart2 = (
         color=alt.Color(
             "Ano:N",
             title="Ano",
-            scale=alt.Scale(domain=[2023, 2024], range=["#00FF00", "#1E90FF"]),
+            scale=alt.Scale(range=color_scheme),
         ),
         tooltip=["DATA RECEBIDO", "Quantidade OS"],
     )
@@ -178,9 +191,8 @@ chart3 = (
         y=alt.Y("Quantidade:Q", title="Quantidade"),
         color=alt.Color(
             "Status:N",
-            scale=alt.Scale(
-                range=["#1E90FF", "#6A5ACD", "#8B0000", "#FFFF00", "#A8DADC", "#00FF00"]
-            ),
+            title="Status",
+            scale=alt.Scale(range=color_scheme),
         ),
         tooltip=["Status", "Quantidade"],
     )
@@ -199,9 +211,8 @@ chart4 = (
         y=alt.Y("Quantidade:Q", title="Quantidade"),
         color=alt.Color(
             "Disciplina:N",
-            scale=alt.Scale(
-                range=["#1E90FF", "#6A5ACD", "#8B0000", "#FFFF00", "#A8DADC", "#00FF00"]
-            ),
+            title="Disciplina",
+            scale=alt.Scale(range=color_scheme),
         ),
         tooltip=["Disciplina", "Quantidade"],
     )
@@ -222,7 +233,7 @@ chart5 = (
         x=alt.X("Mês:N", title="Mês"),
         y=alt.Y("Quantidade:Q", title="Quantidade de Orçamentos"),
         color=alt.Color(
-            "Orçamentista:N", title="Orçamentista", scale=alt.Scale(scheme="tableau20")
+            "Orçamentista:N", title="Orçamentista", scale=alt.Scale(range=color_scheme)
         ),
         tooltip=["Orçamentista", "Mês", "Quantidade"],
     )
@@ -238,7 +249,9 @@ chart6 = (
     .mark_arc()
     .encode(
         theta=alt.Theta(field="Quantidade", type="quantitative"),
-        color=alt.Color(field="Orçamentista", type="nominal"),
+        color=alt.Color(
+            field="Orçamentista", type="nominal", scale=alt.Scale(range=color_scheme)
+        ),
         tooltip=["Orçamentista", "Quantidade"],
     )
     .properties(
@@ -246,7 +259,146 @@ chart6 = (
     )
 )
 
+# Estilos CSS personalizados para métricas e botões
+metric_css = """
+    <style>
+    .metric-label {
+        font-size: 15px;
+        font-weight: bold;
+        text-align: center;
+        font-family: Arial  Narrow, sans-serif;
+    }
+    .metric-value {
+        font-size: 18px;
+        font-weight: bold;
+        color: #FFFF00;
+        text-align: center;
+        font-family: Arial  Narrow, sans-serif;
+        font-weight: bold;
+    }
+    .custom-button {
+        display: block;
+        width: 100%;
+        padding: 10px;
+        font-size: 18px;
+        text-align: center;
+        color: white;
+        background-color: #4CAF50;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-family: Arial  Narrow, sans-serif;
+    }
+    .custom-button:hover {
+        background-color: #FFFF00;
+    }
+    </style>
+"""
+
+# Inserir CSS personalizado na página
+st.markdown(metric_css, unsafe_allow_html=True)
+
+# Layout com gráfico de status na primeira linha
+st.write("### Distribuição de Status")
+st.altair_chart(chart3, use_container_width=True)
+
+# Layout com métricas na segunda linha
+metric_columns = st.columns(len(status_grouped_data) + 1)
+
+# Adicionar métrica para total de OS
+with metric_columns[0]:
+    st.markdown("<div class='metric-label'>Total OS</div>", unsafe_allow_html=True)
+    st.markdown(f"<div class='metric-value'>{total_os}</div>", unsafe_allow_html=True)
+
+# Adicionar métricas de status com botões
+for idx, row in status_grouped_data.iterrows():
+    with metric_columns[idx + 1]:
+        st.markdown(
+            f"<div class='metric-label'>{row['Status']}</div>", unsafe_allow_html=True
+        )
+        st.markdown(
+            f"<div class='metric-value'>{row['Quantidade']}</div>",
+            unsafe_allow_html=True,
+        )
+
+        if st.button(row["Status"], key=f"btn_{row['Status']}"):
+            status_filtered_data = data_filtered_os[
+                data_filtered_os["STATUS*"] == row["Status"]
+            ]
+            st.write(f"Tabela - {row['Status']}")
+            st.write(status_filtered_data)
+
+# Layout com gráfico de valor orçado por status
+st.write("---")
+col1, col2, col3 = st.columns([1, 4, 1])
+
+# Selectbox para escolher o status
+status_options = data["STATUS*"].unique()
+selected_status = col1.selectbox("Selecione o Status", status_options)
+
+# Filtrar os dados com base no status selecionado
+filtered_data_status = data[data["STATUS*"] == selected_status]
+
+# Agrupar dados por ano e mês para o status selecionado
+grouped_data_status = (
+    filtered_data_status.groupby(["Ano", "Mes"])["VALOR ORÇADO"].sum().reset_index()
+)
+
+# Ordenar os meses
+grouped_data_status["Mes"] = pd.Categorical(
+    grouped_data_status["Mes"],
+    categories=[
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December",
+    ],
+    ordered=True,
+)
+grouped_data_status = grouped_data_status.sort_values(["Ano", "Mes"])
+
+# Criar gráfico de barras com Altair para o status selecionado
+chart_status = (
+    alt.Chart(grouped_data_status)
+    .mark_bar()
+    .encode(
+        x=alt.X("Mes:N", title="Mês"),
+        y=alt.Y("VALOR ORÇADO:Q", title="Valor Orçado"),
+        color=alt.Color("Ano:N", title="Ano", scale=alt.Scale(range=color_scheme)),
+        tooltip=["Ano", "Mes", "VALOR ORÇADO"],
+    )
+    .properties(
+        width=600,
+        height=400,
+        title=f"Valor Orçado por Mês para Status '{selected_status}' em 2023 e 2024",
+    )
+)
+
+col2.altair_chart(chart_status, use_container_width=True)
+
+# Calcular métrica para o status selecionado
+total_valor_orcado_status = filtered_data_status["VALOR ORÇADO"].sum()
+
+with col3:
+    st.markdown(
+        f"<div class='metric-label'>Total Valor Orçado ({selected_status})</div>",
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        f"<div class='metric-value'>{total_valor_orcado_status:.2f}</div>",
+        unsafe_allow_html=True,
+    )
+
 # Layout com gráficos e tabelas
+st.write("---")
 col1, col2 = st.columns([1, 6])
 
 with col1:
@@ -267,13 +419,6 @@ with col4:
     show_table2 = st.checkbox("Mostrar Tabela 2", key="table2_checkbox")
     if show_table2:
         st.write(os_grouped_data)
-    st.metric(label="Total de OS Recebidas", value=total_os)
-
-st.write("---")
-status_columns = st.columns(len(status_grouped_data))
-
-for idx, row in status_grouped_data.iterrows():
-    status_columns[idx].metric(label=row["Status"], value=row["Quantidade"])
 
 st.write("---")
 col7, col8 = st.columns([5, 1])
@@ -295,3 +440,54 @@ with col9:
 with col10:
     st.altair_chart(chart5, use_container_width=True)
 
+# Filtrar dados pelos status "APROVADO", "RECEBIDO" e "EXECUÇÃO"
+filtered_status_data = data_filtered_os[
+    data_filtered_os["STATUS*"].isin(["APROVADO", "RECEBIDO", "EXECUÇÃO"])
+]
+
+# Agrupar dados por status, disciplinas, descrição do serviço, previsão de início, previsão de finalização e observação
+grouped_status_data = (
+    filtered_status_data.groupby(
+        [
+            "STATUS*",
+            "DISCIPLINAS",
+            "DESCRIÇÃO DO SERVIÇO",
+            "PREVISÃO DE INÍCIO",
+            "PREVISÃO DE FINALIZAÇÃO",
+            "OBSERVAÇÃO",
+        ]
+    )
+    .size()
+    .reset_index(name="Quantidade")
+)
+st.write("---")
+# Mostrar tabela totalizada
+st.write("Tabela Total dos Status 'APROVADO', 'RECEBIDO' e 'EXECUÇÃO'")
+st.write(grouped_status_data)
+
+# Segunda tabela com os dados filtrados por status "APROVADO", "RECEBIDO" e "EXECUÇÃO"
+st.write("### Segunda Tabela dos Status 'APROVADO', 'RECEBIDO' e 'EXECUÇÃO'")
+second_table = filtered_status_data[
+    ["STATUS*", "DISCIPLINAS", "DESCRIÇÃO DO SERVIÇO", "DATA RECEBIDO"]
+].reset_index(drop=True)
+
+st.write(second_table)
+
+
+# Função para converter DataFrame em XLSX
+def to_excel(df):
+    output = BytesIO()
+    writer = pd.ExcelWriter(output, engine="xlsxwriter")
+    df.to_excel(writer, index=False, sheet_name="Sheet1")
+    writer.close()
+    processed_data = output.getvalue()
+    return processed_data
+
+
+# Botão para download do XLSX
+st.download_button(
+    label="Baixar XLSX",
+    data=to_excel(second_table),
+    file_name="status_aprovado_recebido_execucao.xlsx",
+    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+)
