@@ -1,15 +1,8 @@
 import streamlit as st
 import pandas as pd
 import altair as alt
-from datetime import datetime
-from io import BytesIO
-import xlsxwriter
 
-# Configurar layout da página para largura completa
-st.set_page_config(layout="wide")
-
-# Função para carregar dados com cache de 60 segundos
-@st.cache_data(ttl=60)
+# Função para carregar dados do Google Sheets CSV
 def load_data(url):
     return pd.read_csv(url)
 
@@ -77,9 +70,7 @@ chart1 = (
         color=alt.Color(
             "Ano:N",
             title="Ano",
-            scale=alt.Scale(
-                range=color_scheme
-            ),
+            scale=alt.Scale(range=color_scheme)
         ),
         tooltip=["Ano", "Mes", "VALOR ORÇADO"],
     )
@@ -107,7 +98,7 @@ chart2 = (
         color=alt.Color(
             "Ano:N",
             title="Ano",
-            scale=alt.Scale(range=color_scheme),
+            scale=alt.Scale(range=color_scheme)
         ),
         tooltip=["DATA RECEBIDO", "Quantidade OS"],
     )
@@ -204,14 +195,14 @@ metric_css = """
         font-size: 15px;
         font-weight: bold;
         text-align: center;
-        font-family: Arial  Narrow, sans-serif;
+        font-family: Arial Narrow, sans-serif;
     }
     .metric-value {
         font-size: 18px;
         font-weight: bold;
         color: #FFFF00;
         text-align: center;
-        font-family: Arial  Narrow, sans-serif;
+        font-family: Arial Narrow, sans-serif;
         font-weight: bold;
     }
     .custom-button {
@@ -225,7 +216,7 @@ metric_css = """
         border: none;
         border-radius: 5px;
         cursor: pointer;
-        font-family: Arial  Narrow, sans-serif;
+        font-family: Arial Narrow, sans-serif;
     }
     .custom-button:hover {
         background-color: #FFFF00;
@@ -417,19 +408,4 @@ second_table = filtered_status_data[[
 ]].reset_index(drop=True)
 
 st.write(second_table)
-
-# Função para converter DataFrame em XLSX
-def to_excel(df):
-    output = BytesIO()
-    writer = pd.ExcelWriter(output, engine='xlsxwriter')
-    df.to_excel(writer, index=False, sheet_name='Sheet1')
-    writer.close()
-    processed_data = output.getvalue()
-    return processed_data
-
-# Botão para download do XLSX
-st.download_button(label="Baixar XLSX",
-                   data=to_excel(second_table),
-                   file_name="status_aprovado_recebido_execucao.xlsx",
-                   mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
