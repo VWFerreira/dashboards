@@ -5,6 +5,55 @@ import altair as alt
 # Função para carregar dados do Google Sheets CSV
 def load_data(url):
     return pd.read_csv(url)
+# Configurar layout da página para largura completa
+st.set_page_config(layout="wide")
+
+# Carregar e redimensionar a imagem
+imagem2 = Image.open("./image/trers.png")
+imagem2 = imagem2.resize((200, 200))
+
+# Definir estilo customizado
+st.markdown(
+    """
+    <style>
+    .container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .images {
+        display: flex;
+        gap: 10px;
+    }
+    .images img {
+        width: 150px;
+        height: 150px;
+        animation: spin 5s linear infinite;
+    }
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    .text {
+        display: flex;
+        align-items: left;
+        font-size: 50px;
+        font-weight: bold;
+    }
+    </style>
+    """, unsafe_allow_html=True
+)
+
+# Layout com colunas
+col1, col3 = st.columns([9, 9])
+
+with col1:
+    st.markdown('<div class="images">', unsafe_allow_html=True)
+    st.image(imagem2, caption=None, use_column_width=False)
+    st.markdown('</div>', unsafe_allow_html=True)
+
+with col3:
+    st.markdown('<div class="text">Contrato Correios</div>', unsafe_allow_html=True)
 
 # Carregar dados do Google Sheets CSV
 url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR2Ql1eYWomSTjyQrylSBJ2tHgslpJEmA3iXrxJWTyJMNSkYRauZrJisIgEi1wT9D4Uu7S0Eyo04Xq3/pub?gid=1846942667&single=true&output=csv"
