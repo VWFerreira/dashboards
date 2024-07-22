@@ -1143,7 +1143,7 @@ def semana():
             st.table(
                 filtro_orcamentos_julho[
                     [
-                        "CONTRATO", "OS" "DISCIPLINAS", "ORÇAMENTISTA", "DATA ORÇADO", 
+                        "CONTRATO", "OS", "DISCIPLINAS", "ORÇAMENTISTA", "DATA ORÇADO", 
                         "VALOR INSUMO", "VALOR MÃO DE OBRA", "VALOR ORÇADO"
                     ]
                 ]
