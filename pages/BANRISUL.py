@@ -999,10 +999,10 @@ def semana():
         """
         <style>
         .metric {
-            font-size: 18px !important;
+            font-size: 16px !important;
         }
         .metric-label {
-            font-size: 16px !important;
+            font-size: 14px !important;
             font-family: Arial Narrow, sans-serif;
             font-weight: bold;
             text-align: center;
@@ -1030,7 +1030,6 @@ def semana():
             flex-grow: 1;
         }
         .container {
-            border: 1px solid #ccc;
             padding: 10px;
             border-radius: 5px;
             margin-bottom: 10px;
@@ -1041,7 +1040,6 @@ def semana():
         .btn-primary {
             background-color: #007bff;
             border-color: #007bff;
-            color: #fff;
         }
         .btn-primary:hover {
             background-color: #0056b3;
