@@ -997,7 +997,6 @@ def renderizar_imagem(path):
 def semana():
     st.markdown(
         """
-        <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
         <style>
         .metric {
             font-size: 18px !important;
