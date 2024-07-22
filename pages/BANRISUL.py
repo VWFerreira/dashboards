@@ -8,6 +8,7 @@ st.set_page_config(layout="wide")
 
 url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTlBXGpJ6j2i-C6edJ-eB4X2DD-7KA7Ys1bIR-tCFeYt6B-7S30bcY_bd0TUtEbttDiMBtexpD-2C4-/pub?gid=1319816246&single=true&output=csv"
 
+
 def carregar_dados(url):
     try:
         tabela = pd.read_csv(url)
@@ -15,9 +16,7 @@ def carregar_dados(url):
         for col in date_columns:
             if col in tabela.columns:
                 tabela[col] = pd.to_datetime(
-                    tabela[col], format="%d/%m/%Y",
-                    dayfirst=True,
-                    errors="coerce"
+                    tabela[col], format="%d/%m/%Y", dayfirst=True, errors="coerce"
                 )
         return tabela
 
@@ -25,14 +24,14 @@ def carregar_dados(url):
         st.error(f"Ocorreu um erro ao carregar o arquivo CSV: {e}")
         return None
 
+
 def calcular_metricas(tabela, contrato, data_inicio, data_fim, data_dia):
     data_inicio = pd.to_datetime(data_inicio)
     data_fim = pd.to_datetime(data_fim)
     data_dia = pd.to_datetime(data_dia)
 
     filtro_contrato = (
-        tabela if contrato == "Todos" 
-        else tabela[tabela["CONTRATO"] == contrato]
+        tabela if contrato == "Todos" else tabela[tabela["CONTRATO"] == contrato]
     )
     filtro_periodo = filtro_contrato[
         (filtro_contrato["DATA RECEBIDO"] >= data_inicio)
@@ -53,6 +52,7 @@ def calcular_metricas(tabela, contrato, data_inicio, data_fim, data_dia):
         "total_executadas_dia": total_executadas_dia,
     }
 
+
 def filtrar_ocorrencias(
     tabela, disciplinas, status_aberto, status_finalizado, contrato
 ):
@@ -68,9 +68,11 @@ def filtrar_ocorrencias(
     ]
     return len(abertas), len(finalizadas)
 
+
 def calcular_percentual(abertas, finalizadas):
     total = abertas + finalizadas
     return (finalizadas / total) * 100 if total > 0 else 0
+
 
 def exibir_resultados_lote(tabela, contrato, disciplinas, titulo):
     status_aberto = [
@@ -102,11 +104,8 @@ def exibir_resultados_lote(tabela, contrato, disciplinas, titulo):
         unsafe_allow_html=True,
     )
 
-def exibir_tabelas(tabela,
-                   data_inicio,
-                   data_fim,
-                   data_dia,
-                   contrato):
+
+def exibir_tabelas(tabela, data_inicio, data_fim, data_dia, contrato):
     data_dia = pd.to_datetime(data_dia)
 
     filtro_tabela = tabela[
@@ -131,6 +130,7 @@ def exibir_tabelas(tabela,
         unsafe_allow_html=True,
     )
     st.table(total_disciplina_finalizadas)
+
 
 def exibir_grafico_os_por_dia(tabela, data_inicio, data_fim, contrato):
     st.markdown(
@@ -170,6 +170,7 @@ def exibir_grafico_os_por_dia(tabela, data_inicio, data_fim, contrato):
 
     st.altair_chart(chart, use_container_width=True)
 
+
 def exibir_metricas_lote(tabela, data_inicio, data_fim, data_dia):
     metricas_lote = {
         "Métrica": [
@@ -181,9 +182,7 @@ def exibir_metricas_lote(tabela, data_inicio, data_fim, data_dia):
             "Total de OS Finalizadas Hoje - Lote 02",
         ],
         "Quantidade": [
-            calcular_metricas(tabela, "0100215/2023",
-                              data_inicio, data_fim,
-                              data_dia)[
+            calcular_metricas(tabela, "0100215/2023", data_inicio, data_fim, data_dia)[
                 "total_os_recebidas_dia"
             ],
             calcular_metricas(
@@ -193,9 +192,7 @@ def exibir_metricas_lote(tabela, data_inicio, data_fim, data_dia):
                 datetime(2024, 7, 31).date(),
                 data_dia,
             )["total_os_recebidas"],
-            calcular_metricas(tabela, "0200215/2023",
-                              data_inicio, data_fim,
-                              data_dia)[
+            calcular_metricas(tabela, "0200215/2023", data_inicio, data_fim, data_dia)[
                 "total_os_recebidas_dia"
             ],
             calcular_metricas(
@@ -205,14 +202,10 @@ def exibir_metricas_lote(tabela, data_inicio, data_fim, data_dia):
                 datetime(2024, 7, 31).date(),
                 data_dia,
             )["total_os_recebidas"],
-            calcular_metricas(tabela, "0100215/2023",
-                              data_inicio, data_fim,
-                              data_dia)[
+            calcular_metricas(tabela, "0100215/2023", data_inicio, data_fim, data_dia)[
                 "total_executadas_dia"
             ],
-            calcular_metricas(tabela, "0200215/2023",
-                              data_inicio, data_fim,
-                              data_dia)[
+            calcular_metricas(tabela, "0200215/2023", data_inicio, data_fim, data_dia)[
                 "total_executadas_dia"
             ],
         ],
@@ -220,6 +213,7 @@ def exibir_metricas_lote(tabela, data_inicio, data_fim, data_dia):
 
     df_metricas_lote = pd.DataFrame(metricas_lote)
     st.table(df_metricas_lote)
+
 
 def diario(url):
     st.markdown(
@@ -269,21 +263,17 @@ def diario(url):
 
         total_os = contagem_os.sum()
 
-        st.markdown('<h3 style="font-size:28px; margin-bottom: 40px; font-family:Arial Narrow;">Total de Ordens de Serviços recebidas por Contrato</h3>',
-                    unsafe_allow_html=True)
+        st.markdown(
+            '<h3 style="font-size:28px; margin-bottom: 40px; font-family:Arial Narrow;">Total de Ordens de Serviços recebidas por Contrato</h3>',
+            unsafe_allow_html=True,
+        )
 
         tabela["DATA RECEBIDO"] = pd.to_datetime(
-            tabela["DATA RECEBIDO"],
-            format="%d/%m/%Y",
-            dayfirst=True,
-            errors="coerce"
+            tabela["DATA RECEBIDO"], format="%d/%m/%Y", dayfirst=True, errors="coerce"
         )
 
         tabela["DATA FINALIZADO"] = pd.to_datetime(
-            tabela["DATA FINALIZADO"],
-            format="%d/%m/%Y",
-            dayfirst=True,
-            errors="coerce"
+            tabela["DATA FINALIZADO"], format="%d/%m/%Y", dayfirst=True, errors="coerce"
         )
 
         julho_2024 = tabela[
@@ -418,18 +408,15 @@ def diario(url):
             )
         with col4:
             exibir_resultados_lote(
-                tabela, "0200215/2023",
-                ["ELÉTRICA"], "Elétrica Lote 2"
+                tabela, "0200215/2023", ["ELÉTRICA"], "Elétrica Lote 2"
             )
 
-        st.markdown("<div class='horizontal-line'></div>",
-                    unsafe_allow_html=True)
+        st.markdown("<div class='horizontal-line'></div>", unsafe_allow_html=True)
 
         col5, col6 = st.columns([3, 1])
         with col6:
             data_inicio = st.date_input(
-                "Data de Início", value=datetime(2024, 1, 1).date(),
-                key="data_inicio"
+                "Data de Início", value=datetime(2024, 1, 1).date(), key="data_inicio"
             )
             data_fim = st.date_input(
                 "Data de Fim", value=datetime.now().date(), key="data_fim"
@@ -438,9 +425,7 @@ def diario(url):
                 "Data do Dia", value=datetime.now().date(), key="data_dia"
             )
             contrato_options = ["Todos"] + tabela["CONTRATO"].unique().tolist()
-            contrato = st.selectbox("Contrato",
-                                    contrato_options,
-                                    key="contrato")
+            contrato = st.selectbox("Contrato", contrato_options, key="contrato")
 
             st.markdown(
                 """
@@ -487,8 +472,7 @@ def diario(url):
         with col5:
             exibir_grafico_os_por_dia(tabela, data_inicio, data_fim, contrato)
 
-        st.markdown("<div class='horizontal-line'></div>",
-                    unsafe_allow_html=True)
+        st.markdown("<div class='horizontal-line'></div>", unsafe_allow_html=True)
         st.markdown(
             """
             <div class='metric-subtitle'>
@@ -504,11 +488,12 @@ def diario(url):
         with col8:
             exibir_tabelas(tabela, data_inicio, data_fim, data_dia, contrato)
 
-        st.markdown("<div class='horizontal-line'></div>",
-                    unsafe_allow_html=True)
+        st.markdown("<div class='horizontal-line'></div>", unsafe_allow_html=True)
+
 
 if __name__ == "__main__":
     diario(url)
+
 
 def carregar_dados(url):
     df = pd.read_csv(url)
@@ -546,6 +531,7 @@ def carregar_dados(url):
     df_filtered["Dia"] = df_filtered["DATA ORÇADO"].dt.date
 
     return df_filtered
+
 
 def calcular_metricas(df, contrato):
     df_contrato = df[df["CONTRATO"] == contrato]
@@ -597,6 +583,7 @@ def calcular_metricas(df, contrato):
         valor_total_orcado,
     )
 
+
 def exibir_metricas_tabela(metrics, title):
     st.markdown(f"<div class='title'>{title}</div>", unsafe_allow_html=True)
     df_metrics = pd.DataFrame(
@@ -624,6 +611,7 @@ def exibir_metricas_tabela(metrics, title):
         }
     )
     st.table(df_metrics)
+
 
 def orcamento():
     st.markdown(
@@ -858,12 +846,352 @@ def orcamento():
 
         st.altair_chart(chart3)
 
+
 if __name__ == "__main__":
     orcamento()
+def carregar_dados(url):
+    try:
+        tabela = pd.read_csv(url)
+        date_columns = ["DATA RECEBIDO", "DATA FINALIZADO", "DATA ORÇADO"]
+        for col in date_columns:
+            if col in tabela.columns:
+                tabela[col] = pd.to_datetime(
+                    tabela[col], format="%d/%m/%Y",
+                    dayfirst=True,
+                    errors="coerce"
+                )
 
-import streamlit as st
-import pandas as pd
-import altair as alt
+        # Convertendo colunas de valores para numérico
+        valor_columns = ["VALOR ORÇADO", "VALOR INSUMO", "VALOR MÃO DE OBRA"]
+        for col in valor_columns:
+            if col in tabela.columns:
+                tabela[col] = tabela[col].apply(lambda x: pd.to_numeric(str(x).replace("R$", "").replace(".", "").replace(",", "."), errors="coerce"))
+
+        return tabela
+
+    except Exception as e:
+        st.error(f"Ocorreu um erro ao carregar o arquivo CSV: {e}")
+        return None
+
+def calcular_metricas(tabela, data_inicio, data_fim, contrato):
+    if contrato != "Todos":
+        tabela = tabela[tabela["CONTRATO"] == contrato]
+
+    filtro_recebidas = tabela[
+        (tabela["DATA RECEBIDO"] >= data_inicio) &
+        (tabela["DATA RECEBIDO"] <= data_fim)
+    ]
+    filtro_finalizadas = tabela[
+        (tabela["DATA FINALIZADO"] >= data_inicio) &
+        (tabela["DATA FINALIZADO"] <= data_fim) &
+        (tabela["STATUS*"].isin(["EXECUTADO", "FINALIZADO"]))
+    ]
+    filtro_orcamentos = tabela[
+        (tabela["DATA ORÇADO"] >= data_inicio) &
+        (tabela["DATA ORÇADO"] <= data_fim)
+    ]
+    filtro_abertas = tabela[
+        (tabela["STATUS*"].isin([
+            "RECEBIDO", "ORÇADO", "COMPRAS", "EXECUÇÃO",
+            "VERIFICAR", "PREVENTIVA", "LEVANTAMENTO",
+            "EM ORÇAMENTO", "EM ESPERA", "PROGRAMADO"
+        ])) &
+        (tabela["DATA RECEBIDO"] >= data_inicio) &
+        (tabela["DATA RECEBIDO"] <= data_fim)
+    ]
+
+    total_recebidas = filtro_recebidas.shape[0]
+    total_finalizadas = filtro_finalizadas.shape[0]
+    total_orcamentos = filtro_orcamentos.shape[0]
+    total_abertas = filtro_abertas.shape[0]
+
+    valor_orcado = filtro_orcamentos["VALOR ORÇADO"].sum()
+    valor_insumo = filtro_orcamentos["VALOR INSUMO"].sum()
+    valor_mao_obra = filtro_orcamentos["VALOR MÃO DE OBRA"].sum()
+
+    percentual_finalizadas = (total_finalizadas / total_recebidas * 100
+                              if total_recebidas > 0 else 0)
+
+    return {
+        "total_recebidas": total_recebidas,
+        "total_finalizadas": total_finalizadas,
+        "total_orcamentos": total_orcamentos,
+        "total_abertas": total_abertas,
+        "valor_orcado": valor_orcado,
+        "valor_insumo": valor_insumo,
+        "valor_mao_obra": valor_mao_obra,
+        "percentual_finalizadas": percentual_finalizadas
+    }
+
+def exibir_grafico(tabela, data_inicio, data_fim, contrato):
+    if contrato != "Todos":
+        tabela = tabela[tabela["CONTRATO"] == contrato]
+
+    filtro_recebidas = tabela[
+        (tabela["DATA RECEBIDO"] >= data_inicio) &
+        (tabela["DATA RECEBIDO"] <= data_fim)
+    ]
+
+    grafico = alt.Chart(filtro_recebidas).mark_bar(color='#1E90FF').encode(
+        x='DATA RECEBIDO:T',
+        y='count():Q',
+        tooltip=['DATA RECEBIDO:T', 'count():Q']
+    ).properties(
+        width=400,
+        height=400
+    )
+
+    return grafico
+
+def exibir_grafico_pizza(tabela, data_inicio, data_fim, contrato):
+    if contrato != "Todos":
+        tabela = tabela[tabela["CONTRATO"] == contrato]
+
+    filtro_recebidas = tabela[
+        (tabela["DATA RECEBIDO"] >= data_inicio) &
+        (tabela["DATA RECEBIDO"] <= data_fim)
+    ]
+
+    pizza_data = filtro_recebidas.groupby('NORMAL / URGENTE').size().reset_index(name='count')
+
+    grafico_pizza = alt.Chart(pizza_data).mark_arc(innerRadius=50).encode(
+        theta=alt.Theta(field="count", type="quantitative"),
+        color=alt.Color(field="NORMAL / URGENTE", type="nominal"),
+        tooltip=['NORMAL / URGENTE', 'count']
+    ).properties(
+        width=400,
+        height=400
+    ).configure_mark(
+        color='#6A5ACD'
+    )
+
+    return grafico_pizza
+
+def exibir_grafico_disciplinas(tabela, data_inicio, data_fim):
+    filtro_orcamentos_julho = tabela[
+        (tabela["DATA ORÇADO"] >= data_inicio) &
+        (tabela["DATA ORÇADO"] <= data_fim)
+    ]
+
+    disciplina_totais = filtro_orcamentos_julho.groupby('DISCIPLINAS')['VALOR ORÇADO'].sum().reset_index()
+
+    grafico_disciplinas = alt.Chart(disciplina_totais).mark_bar().encode(
+        x='DISCIPLINAS',
+        y='VALOR ORÇADO',
+        color='DISCIPLINAS',
+        tooltip=['DISCIPLINAS', 'VALOR ORÇADO']
+    ).properties(
+        width=800,
+        height=400
+    )
+
+    return grafico_disciplinas
+
+def renderizar_imagem(path):
+    image = Image.open(path)
+    buffered = BytesIO()
+    image.save(buffered, format="PNG")
+    img_str = base64.b64encode(buffered.getvalue()).decode()
+    return f'<img src="data:image/png;base64,{img_str}" class="img-fluid" alt="Responsive image">'
+
+def semana():
+    st.markdown(
+        """
+        <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
+        <style>
+        .metric {
+            font-size: 18px !important;
+        }
+        .metric-label {
+            font-size: 16px !important;
+            font-family: Arial Narrow, sans-serif;
+            font-weight: bold;
+            text-align: center;
+        }
+        .metric-value {
+            font-size: 16px !important;
+            color: #1E90FF!important;
+            font-family: Arial Narrow, sans-serif;
+            text-align: center;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .header img {
+            height: 100px;
+        }
+        .header-title {
+            font-size: 32px;
+            font-family: Arial Narrow, sans-serif;
+            font-weight: bold;
+            text-align: center;
+            flex-grow: 1;
+        }
+        .container {
+            border: 1px solid #ccc;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        .spacing {
+            margin-top: 50px;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+            color: #fff;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+            border-color: #0056b3;
+        }
+        </style>
+        <div class="header">
+            <div class="header-title">Banrisul Semanal</div>
+        </div>
+        <div class="spacing"></div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    tabela = carregar_dados(url)
+    if tabela is not None:
+        contratos_interesse = ["0100215/2023", "0200215/2023", "Todos"]
+
+        # Filtros de data e contrato na mesma linha dos gráficos
+        col1, col2, col3 = st.columns([1, 3, 1])
+        with col3:
+            data_inicio = st.date_input("Data de Início", datetime(2024, 7, 1))
+            data_fim = st.date_input("Data de Fim", datetime(2024, 7, 31))
+            contrato = st.selectbox("Selecione o Contrato", contratos_interesse)
+
+        data_inicio = pd.to_datetime(data_inicio)
+        data_fim = pd.to_datetime(data_fim)
+
+        # Exibir gráficos
+        with col1:
+            grafico_pizza = exibir_grafico_pizza(tabela, data_inicio, data_fim, contrato)
+            st.altair_chart(grafico_pizza, use_container_width=True)
+        with col2:
+            grafico = exibir_grafico(tabela, data_inicio, data_fim, contrato)
+            st.altair_chart(grafico, use_container_width=True)
+
+        st.write("---")
+
+        # Exibir métricas
+        st.subheader("Métricas")
+        metricas = calcular_metricas(tabela, data_inicio, data_fim, contrato)
+        col1, col2, col3, col4, col5, col6 = st.columns(6)
+        with col1:
+            st.markdown(
+                f"<div class='container'><div class='metric-label'>Total Recebidas</div>"
+                f"<div class='metric-value'>{metricas['total_recebidas']}</div></div>",
+                unsafe_allow_html=True
+            )
+        with col2:
+            st.markdown(
+                f"<div class='container'><div class='metric-label'>Total Finalizadas</div>"
+                f"<div class='metric-value'>{metricas['total_finalizadas']}</div></div>",
+                unsafe_allow_html=True
+            )
+        with col3:
+            st.markdown(
+                f"<div class='container'><div class='metric-label'>Total Orçamentos</div>"
+                f"<div class='metric-value'>{metricas['total_orcamentos']}</div></div>",
+                unsafe_allow_html=True
+            )
+        with col4:
+            st.markdown(
+                f"<div class='container'><div class='metric-label'>Total Abertas</div>"
+                f"<div class='metric-value'>{metricas['total_abertas']}</div></div>",
+                unsafe_allow_html=True
+            )
+        with col5:
+            st.markdown(
+                f"<div class='container'><div class='metric-label'>Percentual Finalizadas</div>"
+                f"<div class='metric-value'>{metricas['percentual_finalizadas']:.2f}%</div></div>",
+                unsafe_allow_html=True
+            )
+        with col6:
+            st.markdown(
+                f"<div class='container'><div class='metric-label'>Total Finalizadas</div>"
+                f"<div class='metric-value'>{metricas['total_finalizadas']}</div></div>",
+                unsafe_allow_html=True
+            )
+
+        st.write("---")
+
+        # Gráfico de valores por disciplina
+        st.subheader("Gráfico de Valores por Disciplina")
+        grafico_disciplinas = exibir_grafico_disciplinas(tabela, data_inicio, data_fim)
+        st.altair_chart(grafico_disciplinas, use_container_width=True)
+
+        # Botões para mostrar/ocultar tabelas
+        st.subheader("Orçamentos Feitos no Mês de Julho")
+        if "mostrar_orcamentos" not in st.session_state:
+            st.session_state.mostrar_orcamentos = False
+
+        if st.button("Mostrar/Ocultar Tabela de Orçamentos"):
+            st.session_state.mostrar_orcamentos = not st.session_state.mostrar_orcamentos
+
+        if st.session_state.mostrar_orcamentos:
+            filtro_orcamentos_julho = tabela[
+                (tabela["DATA ORÇADO"] >= data_inicio) &
+                (tabela["DATA ORÇADO"] <= data_fim)
+            ]
+
+            st.table(
+                filtro_orcamentos_julho[
+                    [
+                        "CONTRATO", "OS" "DISCIPLINAS", "ORÇAMENTISTA", "DATA ORÇADO", 
+                        "VALOR INSUMO", "VALOR MÃO DE OBRA", "VALOR ORÇADO"
+                    ]
+                ]
+            )
+
+        st.subheader("Serviços Finalizados no Mês de Julho")
+        if "mostrar_finalizados" not in st.session_state:
+            st.session_state.mostrar_finalizados = False
+
+        if st.button("Mostrar/Ocultar Tabela de Serviços Finalizados"):
+            st.session_state.mostrar_finalizados = not st.session_state.mostrar_finalizados
+
+        if st.session_state.mostrar_finalizados:
+            filtro_finalizados_julho = tabela[
+                (tabela["DATA FINALIZADO"] >= data_inicio) &
+                (tabela["DATA FINALIZADO"] <= data_fim) &
+                (tabela["STATUS*"].isin(["EXECUTADO", "FINALIZADO"]))
+            ]
+
+            # Calcular dias de atraso
+            filtro_finalizados_julho["DIAS DE ATRASO"] = (filtro_finalizados_julho["DATA FINALIZADO"] - filtro_finalizados_julho["DATA RECEBIDO"]).dt.days - 30
+            filtro_finalizados_julho["DIAS DE ATRASO"] = filtro_finalizados_julho["DIAS DE ATRASO"].apply(lambda x: x if x > 0 else 0)
+
+            st.table(
+                filtro_finalizados_julho[
+                    [
+                        "OS", "RESPONSAVEL TÉCNICO", "DISCIPLINAS",
+                        "STATUS*", "DATA RECEBIDO", "PRAZO DE ATENDIMENTO",
+                        "DATA FINALIZADO", "PRÉDIO", "DIAS DE ATRASO"
+                    ]
+                ]
+            )
+
+        st.markdown(
+            """
+            <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" crossorigin="anonymous"></script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" crossorigin="anonymous"></script>
+            <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" crossorigin="anonymous"></script>
+            """,
+            unsafe_allow_html=True,
+        )
+
+if __name__ == "__main__":
+    semana()
+
 
 def convert_currency(value):
     if isinstance(value, str):
