@@ -66,6 +66,11 @@ data = load_data(url)
 # Remover espaços em branco ao redor dos nomes das colunas
 data.columns = data.columns.str.strip()
 
+# Certificar-se de que a coluna 'VALOR ORÇADO' seja numérica
+data['VALOR ORÇADO'] = data['VALOR ORÇADO'].str.replace('R$', '').str.replace('.', '').str.replace(',', '.').str.strip()
+data['VALOR ORÇADO'] = pd.to_numeric(data['VALOR ORÇADO'], errors='coerce')
+data['VALOR ORÇADO'].fillna(0, inplace=True)
+
 # Converter colunas de datas para o formato datetime
 data['DATA RECEBIDO'] = pd.to_datetime(data['DATA RECEBIDO'], format='%d/%m/%Y', errors='coerce')
 data['DATA ORÇADO'] = pd.to_datetime(data['DATA ORÇADO'], format='%d/%m/%Y', errors='coerce')
@@ -75,10 +80,6 @@ data['DATA FINALIZADO'] = pd.to_datetime(data['DATA FINALIZADO'], format='%d/%m/
 # Remover espaços em branco ao redor dos valores nas colunas de interesse
 data['ORÇAMENTISTA'] = data['ORÇAMENTISTA'].str.strip()
 data['STATUS*'] = data['STATUS*'].str.strip()
-
-# Certificar-se de que a coluna 'VALOR ORÇADO' seja numérica
-data['VALOR ORÇADO'] = pd.to_numeric(data['VALOR ORÇADO'], errors='coerce')
-data['VALOR ORÇADO'].fillna(0, inplace=True)
 
 # Gráfico de Altair para quantidade de OS recebidas por dia em 2023 e 2024
 os_counts = data[data['DATA RECEBIDO'].dt.year.isin([2023, 2024])].groupby([data['DATA RECEBIDO'].dt.date.rename('Data'), data['DATA RECEBIDO'].dt.year.rename('Ano')]).size().reset_index(name='Contagem')
@@ -621,3 +622,4 @@ with col15:
     st.metric(label="Média de Serviços por Dia em 2024", value=f"{avg_2024:.2f}")
 
 st.write("---")
+
