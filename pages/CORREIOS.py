@@ -194,7 +194,7 @@ st.write("## Distribuição de Disciplinas")
 st.altair_chart(final_disciplina_chart, use_container_width=True)
 
 # Filtrar dados pelos diferentes status
-status_list = ["ORÇADO RECEBIDO", "SOLICITAÇÃO DE MATERIAL", "COMPRAS", "EXECUÇÃO", "LEVANTAMENTO", "RECEBIDO"]
+status_list = ["ORÇADO RECEBIDO", "SOLICITAÇÃO DE MATERIAL", "COMPRAS", "EXECUÇÃO", "LEVANTAMENTO", "RECEBIDO", "FINALIZADO E ASSINADO"]
 
 # Contar a quantidade de disciplinas para cada status
 status_counts = {status: data[data['STATUS*'] == status].shape[0] for status in status_list}
@@ -240,6 +240,46 @@ st.write("## Métricas de Contagem")
 cols = st.columns(len(status_counts))
 for col, (status, count) in zip(cols, status_counts.items()):
     col.markdown(f'<div class="metric"><div class="label">{status}</div><div class="value">{count}</div></div>', unsafe_allow_html=True)
+
+# Calcular o valor orçado por status
+valor_orcado_status = data.groupby('STATUS*')['VALOR ORÇADO'].sum().reset_index()
+
+# Adicionar CSS para personalizar métricas de valor orçado por status
+st.markdown(
+    """
+    <style>
+    .valor-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2rem;
+        justify-content: center;
+    }
+    .valor {
+        font-size: 1.5rem;
+        font-weight: bold;
+        margin: 0.5rem;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        text-align: center;
+    }
+    .valor .label {
+        font-size: 0.9rem;
+        font-weight: normal;
+    }
+    .valor .value {
+        font-size: 1.5rem;
+        color: #28a745;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+# Exibir métricas de valor orçado por status
+st.write("## Valor Orçado por Status")
+cols_valor = st.columns(len(valor_orcado_status))
+for col, (status, valor) in zip(cols_valor, valor_orcado_status.itertuples(index=False, name=None)):
+    col.markdown(f'<div class="valor"><div class="label">{status}</div><div class="value">R${valor:,.2f}</div></div>', unsafe_allow_html=True)
 
 # Inicializar estado da sessão para controlar a visibilidade da tabela de dados brutos
 if 'show_raw_table' not in st.session_state:
@@ -575,3 +615,4 @@ with col15:
     st.metric(label="Média de Serviços por Dia em 2024", value=f"{avg_2024:.2f}")
 
 st.write("---")
+
