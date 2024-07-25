@@ -232,7 +232,7 @@ st.markdown(
         font-weight: normal;
     }
     .metric .value {
-        font-size: 1.5rem;
+        font-size: 0.9rem;
         color: #007BFF;
     }
     </style>
@@ -274,7 +274,7 @@ st.markdown(
         font-weight: normal;
     }
     .valor .value {
-        font-size: 1.5rem;
+        font-size: 1.0rem;
         color: #28a745;
     }
     </style>
