@@ -63,6 +63,9 @@ def load_data(url):
 url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTfXp-_Anw2MhzZAfBhLrITSzXy_AVm-K81tFSRLz4xBhuWq7KIdYDFqtdJZ9zGOJpV32H4qPeJ4BrD/pub?gid=1596975483&single=true&output=csv"
 data = load_data(url)
 
+# Remover espaços em branco ao redor dos nomes das colunas
+data.columns = data.columns.str.strip()
+
 # Converter colunas de datas para o formato datetime
 data['DATA RECEBIDO'] = pd.to_datetime(data['DATA RECEBIDO'], format='%d/%m/%Y', errors='coerce')
 data['DATA ORÇADO'] = pd.to_datetime(data['DATA ORÇADO'], format='%d/%m/%Y', errors='coerce')
@@ -344,15 +347,15 @@ def convert_to_float(val):
     return val
 
 # Aplicar a função de conversão nas colunas de valores
-data[' VALOR INSUMO '] = data[' VALOR INSUMO '].apply(convert_to_float)
-data[' VALOR MÃO DE OBRA '] = data[' VALOR MÃO DE OBRA '].apply(convert_to_float)
-data[' VALOR ORÇADO '] = data[' VALOR ORÇADO '].apply(convert_to_float)
+data['VALOR INSUMO'] = data['VALOR INSUMO'].apply(convert_to_float)
+data['VALOR MÃO DE OBRA'] = data['VALOR MÃO DE OBRA'].apply(convert_to_float)
+data['VALOR ORÇADO'] = data['VALOR ORÇADO'].apply(convert_to_float)
 
 # Calcular os valores mensais para insumo, mão de obra e valor orçado
 monthly_values = data.groupby('AnoMes').agg({
-    ' VALOR INSUMO ': 'sum',
-    ' VALOR MÃO DE OBRA ': 'sum',
-    ' VALOR ORÇADO ': 'sum'
+    'VALOR INSUMO': 'sum',
+    'VALOR MÃO DE OBRA': 'sum',
+    'VALOR ORÇADO': 'sum'
 }).reset_index()
 monthly_values['AnoMes'] = monthly_values['AnoMes'].astype(str)
 
@@ -398,12 +401,12 @@ with col7:
 st.write("---")
 
 # Calcular o ticket médio por mês
-ticket_medio_mes = data.groupby('AnoMes')[' VALOR ORÇADO '].mean().reset_index()
+ticket_medio_mes = data.groupby('AnoMes')['VALOR ORÇADO'].mean().reset_index()
 ticket_medio_mes.columns = ['AnoMes', 'Ticket Médio']
 ticket_medio_mes['AnoMes'] = ticket_medio_mes['AnoMes'].astype(str)
 
 # Calcular o ticket médio por dia
-ticket_medio_dia = data.groupby('DATA ORÇADO')[' VALOR ORÇADO '].mean().reset_index()
+ticket_medio_dia = data.groupby('DATA ORÇADO')['VALOR ORÇADO'].mean().reset_index()
 ticket_medio_dia.columns = ['Data', 'Ticket Médio']
 
 # Classificar valores para colorir barras
@@ -488,9 +491,9 @@ if not df_filtered_by_date.empty:
         'DESCRIÇÃO DETALHADA', 'LOCAL CORREIOS', 'PREDIO CORREIOS', 
         'MUNICÍPIO', 'DATA RECEBIDO', 'PRAZO DE ATENDIMENTO', 
         'PREVISÃO DE INÍCIO', 'PREVISÃO DE FINALIZAÇÃO', 'STATUS*', 
-        'DATA DE ATUALIZAÇÃO', ' VALOR ORÇADO ', 'DATA ORÇADO', 
-        'ORÇAMENTISTA', ' VALOR INSUMO ', ' VALOR MÃO DE OBRA ', 
-        'PERCENTUAL FD', 'VALOR FD', 'VALOR GASTO', ' VALOR APROVADO ', 
+        'DATA DE ATUALIZAÇÃO', 'VALOR ORÇADO', 'DATA ORÇADO', 
+        'ORÇAMENTISTA', 'VALOR INSUMO', 'VALOR MÃO DE OBRA', 
+        'PERCENTUAL FD', 'VALOR FD', 'VALOR GASTO', 'VALOR APROVADO', 
         'DATA APROVADO', 'LUCRO BRUTO', 'VALOR PAGO', 
         'DESCRIÇÃO DA EXECUÇÃO', 'EXECUTADO', 'EXECUTADO (%)', 
         'DATA EXECUÇÃO (INÍCIO)', 'DATA FINALIZADO', 'NOTA FISCAL', 
