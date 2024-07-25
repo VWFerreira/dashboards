@@ -194,7 +194,7 @@ st.write("## Distribuição de Disciplinas")
 st.altair_chart(final_disciplina_chart, use_container_width=True)
 
 # Filtrar dados pelos diferentes status
-status_list = ["ORÇADO RECEBIDO", "SOLICITAÇÃO DE MATERIAL", "COMPRAS", "EXECUÇÃO", "LEVANTAMENTO", "RECEBIDO", "FINALIZADO E ASSINADO"]
+status_list = ["ORÇADO RECEBIDO", "SOLICITAÇÃO DE MATERIAL", "COMPRAS", "EXECUÇÃO", "LEVANTAMENTO", "RECEBIDO", "FINALIZADO", "ASSINADO"]
 
 # Contar a quantidade de disciplinas para cada status
 status_counts = {status: data[data['STATUS*'] == status].shape[0] for status in status_list}
