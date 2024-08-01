@@ -175,9 +175,9 @@ def exibir_metricas_lote(tabela, data_inicio, data_fim, data_dia):
     metricas_lote = {
         "Métrica": [
             "Total de OS Recebidas Hoje - Lote 01",
-            "Total de OS Recebidas Julho - Lote 01",
+            "Total de OS Recebidas Agosto - Lote 01",
             "Total de OS Recebidas Hoje - Lote 02",
-            "Total de OS Recebidas Julho - Lote 02",
+            "Total de OS Recebidas Agosto - Lote 02",
             "Total de OS Finalizadas Hoje - Lote 01",
             "Total de OS Finalizadas Hoje - Lote 02",
         ],
@@ -188,8 +188,8 @@ def exibir_metricas_lote(tabela, data_inicio, data_fim, data_dia):
             calcular_metricas(
                 tabela,
                 "0100215/2023",
-                datetime(2024, 7, 1).date(),
-                datetime(2024, 7, 31).date(),
+                datetime(2024, 8, 1).date(),
+                datetime(2024, 8, 31).date(),
                 data_dia,
             )["total_os_recebidas"],
             calcular_metricas(tabela, "0200215/2023", data_inicio, data_fim, data_dia)[
@@ -198,8 +198,8 @@ def exibir_metricas_lote(tabela, data_inicio, data_fim, data_dia):
             calcular_metricas(
                 tabela,
                 "0200215/2023",
-                datetime(2024, 7, 1).date(),
-                datetime(2024, 7, 31).date(),
+                datetime(2024, 8, 1).date(),
+                datetime(2024, 8, 31).date(),
                 data_dia,
             )["total_os_recebidas"],
             calcular_metricas(tabela, "0100215/2023", data_inicio, data_fim, data_dia)[
@@ -276,11 +276,11 @@ def diario(url):
             tabela["DATA FINALIZADO"], format="%d/%m/%Y", dayfirst=True, errors="coerce"
         )
 
-        julho_2024 = tabela[
-            (tabela["DATA RECEBIDO"].dt.month == 7)
+        agosto_2024 = tabela[
+            (tabela["DATA RECEBIDO"].dt.month == 8)
             & (tabela["DATA RECEBIDO"].dt.year == 2024)
         ]
-        total_os_julho = julho_2024.shape[0]
+        total_os_agosto = agosto_2024.shape[0]
 
         col1, col2, col3, col4, col5 = st.columns(5, gap="small")
 
@@ -344,11 +344,11 @@ def diario(url):
 
         with col4:
             st.markdown(
-                "<div style='font-size:18px; text-align:center;font-family:Arial Narrow;font-weight:bold;'>Recebidas Julho 2024</div>",
+                "<div style='font-size:18px; text-align:center;font-family:Arial Narrow;font-weight:bold;'>Recebidas Agosto 2024</div>",
                 unsafe_allow_html=True,
             )
             st.markdown(
-                f"<div style='font-size:24px; text-align:center; color:#FFD700;font-weight:bold;'>{total_os_julho}</div>",
+                f"<div style='font-size:24px; text-align:center; color:#FFD700;font-weight:bold;'>{total_os_agosto}</div>",
                 unsafe_allow_html=True,
             )
 
@@ -780,12 +780,12 @@ def exibir_grafico_pizza(tabela, data_inicio, data_fim, contrato):
     return grafico_pizza
 
 def exibir_grafico_disciplinas(tabela, data_inicio, data_fim):
-    filtro_orcamentos_julho = tabela[
+    filtro_orcamentos_agosto = tabela[
         (tabela["DATA ORÇADO"] >= data_inicio) &
         (tabela["DATA ORÇADO"] <= data_fim)
     ]
 
-    disciplina_totais = filtro_orcamentos_julho.groupby('DISCIPLINAS')['VALOR ORÇADO'].sum().reset_index()
+    disciplina_totais = filtro_orcamentos_agosto.groupby('DISCIPLINAS')['VALOR ORÇADO'].sum().reset_index()
 
     grafico_disciplinas = alt.Chart(disciplina_totais).mark_bar().encode(
         x='DISCIPLINAS',
@@ -873,8 +873,8 @@ def semana():
         # Filtros de data e contrato na mesma linha dos gráficos
         col1, col2, col3 = st.columns([1, 3, 1])
         with col3:
-            data_inicio = st.date_input("Data de Início", datetime(2024, 7, 1))
-            data_fim = st.date_input("Data de Fim", datetime(2024, 7, 31))
+            data_inicio = st.date_input("Data de Início", datetime(2024, 8, 1))
+            data_fim = st.date_input("Data de Fim", datetime(2024, 8, 31))
             contrato = st.selectbox("Selecione o Contrato", contratos_interesse)
 
         data_inicio = pd.to_datetime(data_inicio)
@@ -939,7 +939,7 @@ def semana():
         st.altair_chart(grafico_disciplinas, use_container_width=True)
 
         # Botões para mostrar/ocultar tabelas
-        st.subheader("Orçamentos Feitos no Mês de Julho")
+        st.subheader("Orçamentos Feitos no Mês de Agosto")
         if "mostrar_orcamentos" not in st.session_state:
             st.session_state.mostrar_orcamentos = False
 
@@ -947,13 +947,13 @@ def semana():
             st.session_state.mostrar_orcamentos = not st.session_state.mostrar_orcamentos
 
         if st.session_state.mostrar_orcamentos:
-            filtro_orcamentos_julho = tabela[
+            filtro_orcamentos_agosto = tabela[
                 (tabela["DATA ORÇADO"] >= data_inicio) &
                 (tabela["DATA ORÇADO"] <= data_fim)
             ]
 
             st.table(
-                filtro_orcamentos_julho[
+                filtro_orcamentos_agosto[
                     [
                         "CONTRATO", "OS", "DISCIPLINAS", "ORÇAMENTISTA", "DATA ORÇADO", 
                         "VALOR INSUMO", "VALOR MÃO DE OBRA", "VALOR ORÇADO"
@@ -961,7 +961,7 @@ def semana():
                 ]
             )
 
-        st.subheader("Serviços Finalizados no Mês de Julho")
+        st.subheader("Serviços Finalizados no Mês de Agosto")
         if "mostrar_finalizados" not in st.session_state:
             st.session_state.mostrar_finalizados = False
 
@@ -969,18 +969,18 @@ def semana():
             st.session_state.mostrar_finalizados = not st.session_state.mostrar_finalizados
 
         if st.session_state.mostrar_finalizados:
-            filtro_finalizados_julho = tabela[
+            filtro_finalizados_agosto = tabela[
                 (tabela["DATA FINALIZADO"] >= data_inicio) &
                 (tabela["DATA FINALIZADO"] <= data_fim) &
                 (tabela["STATUS*"].isin(["EXECUTADO", "FINALIZADO"]))
             ]
 
             # Calcular dias de atraso
-            filtro_finalizados_julho["DIAS DE ATRASO"] = (filtro_finalizados_julho["DATA FINALIZADO"] - filtro_finalizados_julho["DATA RECEBIDO"]).dt.days - 30
-            filtro_finalizados_julho["DIAS DE ATRASO"] = filtro_finalizados_julho["DIAS DE ATRASO"].apply(lambda x: x if x > 0 else 0)
+            filtro_finalizados_agosto["DIAS DE ATRASO"] = (filtro_finalizados_agosto["DATA FINALIZADO"] - filtro_finalizados_agosto["DATA RECEBIDO"]).dt.days - 30
+            filtro_finalizados_agosto["DIAS DE ATRASO"] = filtro_finalizados_agosto["DIAS DE ATRASO"].apply(lambda x: x if x > 0 else 0)
 
             st.table(
-                filtro_finalizados_julho[
+                filtro_finalizados_agosto[
                     [
                         "OS", "RESPONSAVEL TÉCNICO", "DISCIPLINAS",
                         "STATUS*", "DATA RECEBIDO", "PRAZO DE ATENDIMENTO",
