@@ -2,13 +2,25 @@ import streamlit as st
 import pandas as pd
 import altair as alt
 from datetime import datetime
+import os
 
 # Configurar layout da página para largura completa
 st.set_page_config(layout="wide")
 
+# Caminho relativo para a imagem
+image_path = "image/banr.png"
+
+# Exibir a imagem se o arquivo existir
+try:
+    st.image(image_path, use_column_width=True)
+except FileNotFoundError:
+    st.error("Erro ao abrir a imagem. Verifique o caminho do arquivo.")
+
+# URL do arquivo CSV do Google Sheets
 url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTlBXGpJ6j2i-C6edJ-eB4X2DD-7KA7Ys1bIR-tCFeYt6B-7S30bcY_bd0TUtEbttDiMBtexpD-2C4-/pub?gid=1319816246&single=true&output=csv"
 
 
+# Função para carregar e limpar os dados do CSV
 def carregar_dados(url):
     try:
         tabela = pd.read_csv(url)
@@ -18,6 +30,18 @@ def carregar_dados(url):
                 tabela[col] = pd.to_datetime(
                     tabela[col], format="%d/%m/%Y", dayfirst=True, errors="coerce"
                 )
+
+        # Convertendo colunas de valores para numérico
+        valor_columns = ["VALOR ORÇADO", "VALOR INSUMO", "VALOR MÃO DE OBRA"]
+        for col in valor_columns:
+            if col in tabela.columns:
+                tabela[col] = tabela[col].apply(
+                    lambda x: pd.to_numeric(
+                        str(x).replace("R$", "").replace(".", "").replace(",", "."),
+                        errors="coerce",
+                    )
+                )
+
         return tabela
 
     except Exception as e:
@@ -25,6 +49,7 @@ def carregar_dados(url):
         return None
 
 
+# Função para calcular métricas com base em contrato e datas
 def calcular_metricas(tabela, contrato, data_inicio, data_fim, data_dia):
     data_inicio = pd.to_datetime(data_inicio)
     data_fim = pd.to_datetime(data_fim)
@@ -53,6 +78,7 @@ def calcular_metricas(tabela, contrato, data_inicio, data_fim, data_dia):
     }
 
 
+# Função para filtrar ocorrências abertas e finalizadas
 def filtrar_ocorrencias(
     tabela, disciplinas, status_aberto, status_finalizado, contrato
 ):
@@ -69,11 +95,13 @@ def filtrar_ocorrencias(
     return len(abertas), len(finalizadas)
 
 
+# Função para calcular percentual de finalização
 def calcular_percentual(abertas, finalizadas):
     total = abertas + finalizadas
     return (finalizadas / total) * 100 if total > 0 else 0
 
 
+# Função para exibir resultados por lote
 def exibir_resultados_lote(tabela, contrato, disciplinas, titulo):
     status_aberto = [
         "RECEBIDO",
@@ -100,11 +128,12 @@ def exibir_resultados_lote(tabela, contrato, disciplinas, titulo):
             <h4 style='font-size: 1.1rem;font-family:Arial Narrow; text-align: center;'>{titulo}</h4>
             <p style='color: #1E90FF; font-size: 1.0rem; text-align: center;'>Abertas: {abertas} | Finalizadas: {finalizadas} | Percentual: {percentual:.2f}%</p>
         </div>
-        """,
+    """,
         unsafe_allow_html=True,
     )
 
 
+# Função para exibir tabela de disciplinas finalizadas hoje
 def exibir_tabelas(tabela, data_inicio, data_fim, data_dia, contrato):
     data_dia = pd.to_datetime(data_dia)
 
@@ -132,45 +161,7 @@ def exibir_tabelas(tabela, data_inicio, data_fim, data_dia, contrato):
     st.table(total_disciplina_finalizadas)
 
 
-def exibir_grafico_os_por_dia(tabela, data_inicio, data_fim, contrato):
-    st.markdown(
-        "<h2 class='custom-subheader'>Quantidade Ordens de Serviços recebidas por dia</h2>",
-        unsafe_allow_html=True,
-    )
-
-    data_inicio = pd.to_datetime(data_inicio)
-    data_fim = pd.to_datetime(data_fim)
-
-    filtro_tabela = tabela[
-        (tabela["DATA RECEBIDO"] >= data_inicio)
-        & (tabela["DATA RECEBIDO"] <= data_fim)
-        & ((tabela["CONTRATO"] == contrato) | (contrato == "Todos"))
-    ].copy()  # Ensure we work with a copy
-
-    filtro_tabela["MÊS"] = filtro_tabela["DATA RECEBIDO"].dt.month_name()
-
-    os_por_dia = (
-        filtro_tabela.groupby(["DATA RECEBIDO", "MÊS"])
-        .size()
-        .reset_index(name="Quantidade")
-    )
-
-    chart = (
-        alt.Chart(os_por_dia)
-        .mark_bar()
-        .encode(
-            x="DATA RECEBIDO:T",
-            y="Quantidade:Q",
-            color="MÊS:N",
-            tooltip=["DATA RECEBIDO", "Quantidade", "MÊS"],
-        )
-        .properties(width=600, height=400)
-        .interactive()
-    )
-
-    st.altair_chart(chart, use_container_width=True)
-
-
+# Função para exibir métricas de lote
 def exibir_metricas_lote(tabela, data_inicio, data_fim, data_dia):
     metricas_lote = {
         "Métrica": [
@@ -215,6 +206,7 @@ def exibir_metricas_lote(tabela, data_inicio, data_fim, data_dia):
     st.table(df_metricas_lote)
 
 
+# Função principal para exibir a página "Diário"
 def diario(url):
     st.markdown(
         """
@@ -223,11 +215,9 @@ def diario(url):
             font-size: 16px;
             font-family: Arial Narrow;
         }
-
         .lote-card h4 {
             font-family: Arial Narrow;
         }
-      
         .custom-subheader {
             font-size: 18px;
             margin-top: 20px;
@@ -249,7 +239,7 @@ def diario(url):
             margin: 20px 0;
         }
         </style>
-        """,
+    """,
         unsafe_allow_html=True,
     )
 
@@ -260,7 +250,6 @@ def diario(url):
         dados_filtrados = tabela[filtro_contratos]
 
         contagem_os = dados_filtrados["CONTRATO"].value_counts()
-
         total_os = contagem_os.sum()
 
         st.markdown(
@@ -271,7 +260,6 @@ def diario(url):
         tabela["DATA RECEBIDO"] = pd.to_datetime(
             tabela["DATA RECEBIDO"], format="%d/%m/%Y", dayfirst=True, errors="coerce"
         )
-
         tabela["DATA FINALIZADO"] = pd.to_datetime(
             tabela["DATA FINALIZADO"], format="%d/%m/%Y", dayfirst=True, errors="coerce"
         )
@@ -285,30 +273,6 @@ def diario(url):
         col1, col2, col3, col4, col5 = st.columns(5, gap="small")
 
         with col1:
-            data_pie = pd.DataFrame(
-                {
-                    "Contrato": contratos_interesse,
-                    "Quantidade": [
-                        contagem_os.get(contratos_interesse[0], 0),
-                        contagem_os.get(contratos_interesse[1], 0),
-                    ],
-                }
-            )
-
-            pie_chart = (
-                alt.Chart(data_pie)
-                .mark_arc(innerRadius=50)
-                .encode(
-                    theta=alt.Theta(field="Quantidade", type="quantitative"),
-                    color=alt.Color(field="Contrato", type="nominal"),
-                    tooltip=["Contrato", "Quantidade"],
-                )
-                .properties(width=150, height=150)
-            )
-
-            st.altair_chart(pie_chart, use_container_width=True)
-
-        with col2:
             contrato_1 = contratos_interesse[0]
             count_1 = contagem_os.get(contrato_1, 0)
             st.markdown(
@@ -320,7 +284,7 @@ def diario(url):
                 unsafe_allow_html=True,
             )
 
-        with col3:
+        with col2:
             contrato_2 = contratos_interesse[1]
             count_2 = contagem_os.get(contrato_2, 0)
             st.markdown(
@@ -348,7 +312,7 @@ def diario(url):
                 unsafe_allow_html=True,
             )
             st.markdown(
-                f"<div style='font-size:24px; text-align:center; color:#FFD700;font-weight:bold;'>{total_os_agosto}</div>",
+                f"<div style='font-size:24px; text-align:center; color:#8B0000;font-weight:bold;'>{total_os_agosto}</div>",
                 unsafe_allow_html=True,
             )
 
@@ -413,7 +377,7 @@ def diario(url):
 
         st.markdown("<div class='horizontal-line'></div>", unsafe_allow_html=True)
 
-        col5, col6 = st.columns([3, 1])
+        col4, col6 = st.columns([3, 2])
         with col6:
             data_inicio = st.date_input(
                 "Data de Início", value=datetime(2024, 1, 1).date(), key="data_inicio"
@@ -432,7 +396,7 @@ def diario(url):
                 <div class='metric-subtitle'>
                     <h4>Métricas Consolidadas Totais</h4>
                 </div>
-                """,
+            """,
                 unsafe_allow_html=True,
             )
 
@@ -453,49 +417,34 @@ def diario(url):
                 )["total_executadas_dia"]
             )
 
-            st.write(f"Debug Info: {total_os_finalizadas_dia}")  # Debug line
-
             metricas_totais = {
                 "Métrica": [
                     "Total de OS Recebidas Hoje",
                     "Total de OS Finalizadas Hoje",
                 ],
-                "Quantidade": [
-                    total_os_recebidas_dia,
-                    total_os_finalizadas_dia,
-                ],
+                "Quantidade": [total_os_recebidas_dia, total_os_finalizadas_dia],
             }
 
             df_metricas_totais = pd.DataFrame(metricas_totais)
             st.table(df_metricas_totais)
 
-        with col5:
-            exibir_grafico_os_por_dia(tabela, data_inicio, data_fim, contrato)
-
         st.markdown("<div class='horizontal-line'></div>", unsafe_allow_html=True)
-        st.markdown(
-            """
-            <div class='metric-subtitle'>
-                <h4>Métricas Lote 01 e Lote 02</h4>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
 
-        col7, col8 = st.columns([6, 4])
-        with col7:
+        with col4:
+            st.markdown(
+                """
+                <div class='metric-subtitle'>
+                    <h4>Métricas Lote 01 e Lote 02</h4>
+                </div>
+            """,
+                unsafe_allow_html=True,
+            )
             exibir_metricas_lote(tabela, data_inicio, data_fim, data_dia)
-        with col8:
             exibir_tabelas(tabela, data_inicio, data_fim, data_dia, contrato)
 
-        st.markdown("<div class='horizontal-line'></div>", unsafe_allow_html=True)
 
-
-if __name__ == "__main__":
-    diario(url)
-
-
-def carregar_dados(url):
+# Função para carregar e limpar dados do CSV
+def carregar_dados_2(url):
     df = pd.read_csv(url)
     df_filtered = df[
         [
@@ -524,7 +473,6 @@ def carregar_dados(url):
     df_filtered = df_filtered[
         df_filtered["DATA ORÇADO"].dt.year.isin([2023, 2024, 2025, 2026, 2027])
     ]
-
     df_filtered["AnoMes"] = (
         df_filtered["DATA ORÇADO"].dt.to_period("M").dt.to_timestamp()
     )
@@ -533,7 +481,8 @@ def carregar_dados(url):
     return df_filtered
 
 
-def calcular_metricas(df, contrato):
+# Função para calcular métricas financeiras
+def calcular_metricas_financeiras(df, contrato):
     df_contrato = df[df["CONTRATO"] == contrato]
     data_atual = datetime.now().date()
     mes_atual = datetime.now().month
@@ -547,30 +496,22 @@ def calcular_metricas(df, contrato):
         df_contrato["STATUS*"].isin(["FINALIZADO", "EXECUTADO"])
     ]
 
-    if not df_today.empty:
-        valor_orcado_hoje = df_today["VALOR ORÇADO"].sum()
-        valor_insumo_hoje = df_today["VALOR INSUMO"].sum()
-        valor_mao_de_obra_hoje = df_today["VALOR MÃO DE OBRA"].sum()
-        orcamentos_hoje = df_today.shape[0]
-    else:
-        valor_orcado_hoje = 0
-        valor_insumo_hoje = 0
-        valor_mao_de_obra_hoje = 0
-        orcamentos_hoje = 0
+    valor_orcado_hoje = df_today["VALOR ORÇADO"].sum() if not df_today.empty else 0
+    valor_insumo_hoje = df_today["VALOR INSUMO"].sum() if not df_today.empty else 0
+    valor_mao_de_obra_hoje = (
+        df_today["VALOR MÃO DE OBRA"].sum() if not df_today.empty else 0
+    )
+    orcamentos_hoje = df_today.shape[0] if not df_today.empty else 0
 
-    if not df_month.empty:
-        valor_orcado_mes = df_month["VALOR ORÇADO"].sum()
-        valor_insumo_mes = df_month["VALOR INSUMO"].sum()
-        valor_mao_de_obra_mes = df_month["VALOR MÃO DE OBRA"].sum()
-    else:
-        valor_orcado_mes = 0
-        valor_insumo_mes = 0
-        valor_mao_de_obra_mes = 0
+    valor_orcado_mes = df_month["VALOR ORÇADO"].sum() if not df_month.empty else 0
+    valor_insumo_mes = df_month["VALOR INSUMO"].sum() if not df_month.empty else 0
+    valor_mao_de_obra_mes = (
+        df_month["VALOR MÃO DE OBRA"].sum() if not df_month.empty else 0
+    )
 
-    if not df_finalizado.empty:
-        valor_total_orcado = df_finalizado["VALOR ORÇADO"].sum()
-    else:
-        valor_total_orcado = 0
+    valor_total_orcado = (
+        df_finalizado["VALOR ORÇADO"].sum() if not df_finalizado.empty else 0
+    )
 
     return (
         valor_orcado_hoje,
@@ -584,6 +525,7 @@ def calcular_metricas(df, contrato):
     )
 
 
+# Função para exibir tabela de métricas financeiras
 def exibir_metricas_tabela(metrics, title):
     st.markdown(f"<div class='title'>{title}</div>", unsafe_allow_html=True)
     df_metrics = pd.DataFrame(
@@ -613,6 +555,7 @@ def exibir_metricas_tabela(metrics, title):
     st.table(df_metrics)
 
 
+# Função principal para exibir a página "Orçamento"
 def orcamento():
     st.markdown(
         """
@@ -624,7 +567,6 @@ def orcamento():
             text-align: center;
             line-height: 3.5;
         }
-       
         .metric-value {
             font-size: 28px;
             color: #4682B4;
@@ -633,31 +575,27 @@ def orcamento():
             font-weight: bold;
         }
         </style>
-        """,
+    """,
         unsafe_allow_html=True,
     )
 
-    url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTlBXGpJ6j2i-C6edJ-eB4X2DD-7KA7Ys1bIR-tCFeYt6B-7S30bcY_bd0TUtEbttDiMBtexpD-2C4-/pub?gid=1319816246&single=true&output=csv"
-    df_filtered = carregar_dados(url)
+    df_filtered = carregar_dados_2(url)
 
-
-    metrics_lote1 = calcular_metricas(df_filtered, "0100215/2023")
-    metrics_lote2 = calcular_metricas(df_filtered, "0200215/2023")
+    metrics_lote1 = calcular_metricas_financeiras(df_filtered, "0100215/2023")
+    metrics_lote2 = calcular_metricas_financeiras(df_filtered, "0200215/2023")
 
     col3, col4 = st.columns(2)
     with col3:
-        exibir_metricas_tabela(
-            metrics_lote1,
-            "Métricas Lote 1 - Contrato 0100215/2023",
-        )
+        exibir_metricas_tabela(metrics_lote1, "Métricas Lote 1 - Contrato 0100215/2023")
     with col4:
-        exibir_metricas_tabela(
-            metrics_lote2,
-            "Métricas Lote 2 - Contrato 0200215/2023",
-        )
+        exibir_metricas_tabela(metrics_lote2, "Métricas Lote 2 - Contrato 0200215/2023")
 
     st.write("---")
 
+
+if __name__ == "__main__":
+    diario(url)
+    orcamento()
 
 if __name__ == "__main__":
     orcamento()
